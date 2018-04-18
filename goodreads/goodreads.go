@@ -7,8 +7,6 @@ import (
 	"log"
 	"net/http"
 	"time"
-
-	"github.com/KyberNetwork/reserve-data/common"
 )
 
 const (
@@ -68,20 +66,41 @@ func GetResponse(
 	} else {
 		defer resp.Body.Close()
 		resp_body, err = ioutil.ReadAll(resp.Body)
-		log.Printf("request to %s, got response: %s\n", req.URL, common.TruncStr(resp_body))
+		log.Printf("request to %s, got response: %s\n", req.URL, resp_body)
 		return resp_body, err
 	}
 }
 
-func GetListShelves() (UserShelves, error) {
+func GetListShelves() (GoodreadsUserShelves, error) {
 	resp_body, err := GetResponse(
 		"GET",
 		"https://www.goodreads.com/shelf/list.xml?key="+GOODREADS_API_KEY+"&user_id="+USER_ID,
 		map[string]string{},
 	)
-	result := UserShelves{}
+	result := GoodreadsUserShelves{}
 	if err == nil {
 		xml.Unmarshal(resp_body, &result)
+	} else {
+		log.Println(err.Error())
+	}
+	return result, err
+}
+
+func SearchBook(searchQuery string) (BookSearchResponse, error) {
+	resp_body, err := GetResponse(
+		"GET",
+		"https://www.goodreads.com/search/index.xml",
+		map[string]string{
+			"key": GOODREADS_API_KEY,
+			"q":   searchQuery,
+		},
+	)
+	result := BookSearchResponse{}
+	if err == nil {
+		err := xml.Unmarshal(resp_body, &result)
+		if err != nil {
+			log.Println(err.Error())
+		}
 	} else {
 		log.Println(err.Error())
 	}
