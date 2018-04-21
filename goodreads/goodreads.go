@@ -6,12 +6,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
-)
-
-const (
-	GOODREADS_API_KEY string = "tPChp05p5D2dfR0AP6XXyg"
-	USER_ID           string = "27284337"
 )
 
 type GoodReads struct {
@@ -71,11 +67,14 @@ func GetResponse(
 	}
 }
 
-func GetListShelves() (GoodreadsUserShelves, error) {
+func (self GoodReads) GetListShelves() (GoodreadsUserShelves, error) {
 	resp_body, err := GetResponse(
 		"GET",
-		"https://www.goodreads.com/shelf/list.xml?key="+GOODREADS_API_KEY+"&user_id="+USER_ID,
-		map[string]string{},
+		"https://www.goodreads.com/shelf/list.xml",
+		map[string]string{
+			"key":     self.Key,
+			"user_id": self.UserID,
+		},
 	)
 	result := GoodreadsUserShelves{}
 	if err == nil {
@@ -86,12 +85,12 @@ func GetListShelves() (GoodreadsUserShelves, error) {
 	return result, err
 }
 
-func SearchBook(searchQuery string) (BookSearchResponse, error) {
+func (self GoodReads) SearchBook(searchQuery string) (BookSearchResponse, error) {
 	resp_body, err := GetResponse(
 		"GET",
 		"https://www.goodreads.com/search/index.xml",
 		map[string]string{
-			"key": GOODREADS_API_KEY,
+			"key": self.Key,
 			"q":   searchQuery,
 		},
 	)
@@ -105,4 +104,20 @@ func SearchBook(searchQuery string) (BookSearchResponse, error) {
 		log.Println(err.Error())
 	}
 	return result, err
+}
+
+func (seflf GoodReads) AddBookToShelf(bookId int, shelfName string) error {
+	_, err := GetResponse(
+		"POST",
+		"https://www.goodreads.com/shelf/add_to_shelf.xml",
+		map[string]string{
+			"name":    shelfName,
+			"book_id": strconv.Itoa(bookId),
+		},
+	)
+	if err != nil {
+		log.Println(err.Error())
+		return err
+	}
+	return err
 }
