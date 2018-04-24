@@ -14,9 +14,10 @@ import (
 )
 
 type BotConfig struct {
-	Key             string `json:"bot_key"`
-	GoodreadsKey    string `json:"goodreads_api_key"`
-	GoodreadsUserID string `json:"goodreads_user_id"`
+	Key                string `json:"bot_key"`
+	GoodreadsKey       string `json:"goodreads_api_key"`
+	GoodreadsSecretKey string `json:"goodreads_api_secret"`
+	GoodreadsUserID    string `json:"goodreads_user_id"`
 }
 
 type Bot struct {
@@ -40,7 +41,10 @@ func readConfigFromFile(path string) (BotConfig, error) {
 
 func main() {
 	path := "./config.json"
-	botConfig, _ := readConfigFromFile(path)
+	botConfig, err := readConfigFromFile(path)
+	if err != nil {
+		log.Fatal(err)
+	}
 	tbot, err := tb.NewBot(tb.Settings{
 		Token:  botConfig.Key,
 		Poller: &tb.LongPoller{Timeout: 5 * time.Second},
@@ -48,8 +52,9 @@ func main() {
 	mybot := Bot{
 		bot: tbot,
 		goodreads: goodreads.GoodReads{
-			Key:    botConfig.GoodreadsKey,
-			UserID: botConfig.GoodreadsUserID,
+			Key:       botConfig.GoodreadsKey,
+			SecretKey: botConfig.GoodreadsSecretKey,
+			UserID:    botConfig.GoodreadsUserID,
 		},
 	}
 	if err != nil {
@@ -114,6 +119,7 @@ func (self Bot) handleText(m *tb.Message) {
 }
 
 func (self Bot) searchBook(query string, m *tb.Message) {
+	log.Printf("Search for book: %s", query)
 	result, _ := self.goodreads.SearchBook(query)
 	for i := 0; i < 5 && i < len(result.Books); i++ {
 		book := result.Books[i]
@@ -144,20 +150,34 @@ func (self Bot) searchBook(query string, m *tb.Message) {
 	}
 }
 
+func (self Bot) addToShelf(bookID int, shelfName string, m *tb.Message) {
+	err := self.goodreads.AddBookToShelf(bookID, shelfName)
+	if err != nil {
+		log.Printf("Cannot not add book to shelf: %s", err.Error())
+	}
+	self.bot.Send(m.Sender, fmt.Sprintf("Add book to shelf %s successfully", shelfName))
+}
+
 func (self Bot) handleAddToShelf(bookID int, m *tb.Message) {
 	result, _ := self.goodreads.GetListShelves()
-	replyKeys := [][]tb.ReplyButton{}
+	inlineKeys := [][]tb.InlineButton{}
 	for _, v := range result.Shelves.UserShelves {
-		replyBtn := tb.ReplyButton{
-			Text: v.Name,
+		inlineBtn := tb.InlineButton{
+			Text:   v.Name,
+			Unique: fmt.Sprintf("%d", v.ID),
 		}
-		replyKeys = append(replyKeys, []tb.ReplyButton{replyBtn})
+		self.bot.Handle(&inlineBtn, func(c *tb.Callback) {
+			self.addToShelf(bookID, v.Name, m)
+			self.bot.Respond(c, &tb.CallbackResponse{})
+		})
+		inlineKeys = append(inlineKeys, []tb.InlineButton{inlineBtn})
 	}
-	replyBtn := tb.ReplyButton{
-		Text: "Add new shelf",
+	inlineBtn := tb.InlineButton{
+		Text:   "Add new shelf",
+		Unique: "add_new_shelf",
 	}
-	replyKeys = append(replyKeys, []tb.ReplyButton{replyBtn})
+	inlineKeys = append(inlineKeys, []tb.InlineButton{inlineBtn})
 	self.bot.Send(m.Sender, "Which self do you want to set to?", &tb.ReplyMarkup{
-		ReplyKeyboard: replyKeys,
+		InlineKeyboard: inlineKeys,
 	})
 }
