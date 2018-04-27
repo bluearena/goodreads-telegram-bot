@@ -6,8 +6,6 @@ import (
 	"log"
 	"net/http"
 	"time"
-
-	"github.com/KyberNetwork/reserve-data/common"
 )
 
 
@@ -52,7 +50,7 @@ func (self *Bot) GetResponse(
 	} else {
 		defer resp.Body.Close()
 		resp_body, err = ioutil.ReadAll(resp.Body)
-		log.Printf("request to %s, got response: %s\n", req.URL, common.TruncStr(resp_body))
+		log.Printf("request to %s, got response: %s\n", req.URL, resp_body)
 		return resp_body, err
 	}
 }
