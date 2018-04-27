@@ -1,0 +1,15 @@
+language: go
+
+install: true
+
+go:
+    - "1.x"
+    - "1.8"
+    - "1.10.x"
+
+before_install:
+    - go get "gopkg.in/tucnak/telebot.v2"
+    - go get "github.com/halink0803/goodreads-telegram-bot/goodreads"
+
+script:
+    - go test -cpu=1,2 -v -tags test ./...
