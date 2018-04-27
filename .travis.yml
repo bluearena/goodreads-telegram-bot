@@ -7,9 +7,12 @@ go:
     - "1.8"
     - "1.10.x"
 
-before_install:
-    - go get "gopkg.in/tucnak/telebot.v2"
-    - go get "github.com/halink0803/goodreads-telegram-bot/goodreads"
-
+install:
+    - get get -t -v ./...
 script:
     - go test -cpu=1,2 -v -tags test ./...
+
+notifications:
+    email:
+        on_success: change 
+        on_failure: always
