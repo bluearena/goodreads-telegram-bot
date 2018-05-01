@@ -10,6 +10,7 @@ import (
 	"time"
 
 	goodreads "github.com/halink0803/goodreads-telegram-bot/goodreads"
+	"google.golang.org/appengine"
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
@@ -79,6 +80,7 @@ func main() {
 	})
 
 	mybot.bot.Start()
+	appengine.Main()
 }
 
 func (self Bot) getListOfBookShelves(m *tb.Message) {
