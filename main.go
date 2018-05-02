@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	goodreads "github.com/halink0803/goodreads-telegram-bot/goodreads"
 	"google.golang.org/appengine"
 	tb "gopkg.in/tucnak/telebot.v2"
 )
@@ -23,7 +22,7 @@ type BotConfig struct {
 
 type Bot struct {
 	bot            *tb.Bot
-	goodreads      goodreads.GoodReads
+	goodreads      GoodReads
 	currentCommand string
 }
 
@@ -52,7 +51,7 @@ func main() {
 	})
 	mybot := Bot{
 		bot: tbot,
-		goodreads: goodreads.GoodReads{
+		goodreads: GoodReads{
 			Key:       botConfig.GoodreadsKey,
 			SecretKey: botConfig.GoodreadsSecretKey,
 			UserID:    botConfig.GoodreadsUserID,
